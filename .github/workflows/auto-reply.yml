@@ -25,5 +25,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BOT_USERNAME: hoanganhkm352-pixel
-          HF_MODEL: gpt2
+          HF_MODEL: EleutherAI/gpt-neo-125M
         run: npm run respond
