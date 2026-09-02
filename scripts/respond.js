@@ -37,34 +37,47 @@ async function main() {
       return;
     }
 
-    // Build prompt for OpenAI (in Vietnamese)
+    // Build prompt for model (in Vietnamese)
     const prompt = `Bạn là một trợ lý lập trình bằng tiếng Việt. Trả lời ngắn gọn, lịch sự và rõ ràng cho nội dung sau:\n\n${commentBody}`;
 
-    const openaiKey = process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
-      console.error('OPENAI_API_KEY not set. Please add it to repository secrets.');
+    const hfToken = process.env.HF_API_TOKEN;
+    if (!hfToken) {
+      console.error('HF_API_TOKEN not set. Please add it to repository secrets.');
       process.exit(1);
     }
 
-    // Call OpenAI Chat Completion API
-    const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 512,
-      temperature: 0.2
-    }, {
+    const model = process.env.HF_MODEL || 'gpt2';
+    const url = `https://api-inference.huggingface.co/models/${model}`;
+
+    // Call Hugging Face Inference API
+    const resp = await axios.post(url, { inputs: prompt, options: { wait_for_model: true } }, {
       headers: {
-        Authorization: `Bearer ${openaiKey}`,
+        Authorization: `Bearer ${hfToken}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 120000
     });
 
-    const reply = (resp.data && resp.data.choices && resp.data.choices[0] && resp.data.choices[0].message && resp.data.choices[0].message.content) || '';
+    // Response handling: HF may return array of generated items or object
+    let reply = '';
+    if (Array.isArray(resp.data)) {
+      // models like text-generation return [{generated_text: '...'}]
+      reply = resp.data.map(item => item.generated_text || '').join('\n').trim();
+    } else if (typeof resp.data === 'object' && resp.data.generated_text) {
+      reply = resp.data.generated_text;
+    } else if (typeof resp.data === 'string') {
+      reply = resp.data;
+    } else {
+      reply = JSON.stringify(resp.data);
+    }
 
     if (!reply) {
-      console.log('OpenAI returned empty reply. Exiting.');
+      console.log('Model returned empty reply. Exiting.');
       return;
     }
+
+    // Truncate reply if too long for GitHub comment
+    if (reply.length > 6000) reply = reply.slice(0, 6000) + '\n\n*(truncated)*';
 
     // Post comment back to the issue/PR
     const githubToken = process.env.GITHUB_TOKEN;

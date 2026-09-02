@@ -21,8 +21,9 @@ jobs:
 
       - name: Run auto-reply script
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BOT_USERNAME: hoanganhkm352-pixel
+          HF_MODEL: gpt2
         run: npm run respond
