@@ -1,0 +1,12 @@
+{
+  "name": "awesome-ai-agent-tools-auto-reply",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "respond": "node scripts/respond.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "@octokit/rest": "^19.0.7"
+  }
+}
